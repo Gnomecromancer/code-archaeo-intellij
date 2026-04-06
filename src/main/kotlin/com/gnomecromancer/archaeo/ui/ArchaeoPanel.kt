@@ -32,6 +32,7 @@ class ArchaeoPanel : JPanel(BorderLayout()) {
     fun setContent(header: String, narrative: String) {
         val html = buildHtml(header, narrative)
         SwingUtilities.invokeLater {
+            textPane.contentType = "text/html"
             textPane.text = html
             textPane.caretPosition = 0
         }
@@ -39,12 +40,14 @@ class ArchaeoPanel : JPanel(BorderLayout()) {
 
     fun setLoading(message: String) {
         SwingUtilities.invokeLater {
+            textPane.contentType = "text/html"
             textPane.text = buildHtml("", "<em>$message</em>")
         }
     }
 
     fun setError(message: String) {
         SwingUtilities.invokeLater {
+            textPane.contentType = "text/html"
             textPane.text = buildHtml("Error", "<span style='color:#e06c75'>$message</span>")
         }
     }
