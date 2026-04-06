@@ -1,0 +1,53 @@
+<idea-plugin>
+    <id>com.gnomecromancer.code-archaeo</id>
+    <name>Code Archaeo</name>
+    <vendor url="https://github.com/Gnomecromancer">Gnomecromancer</vendor>
+    <version>0.1.0</version>
+
+    <description><![CDATA[
+        <p>Synthesize the story of how a file or function evolved from git history.</p>
+        <p>Right-click any file or function in the editor and select <b>Code Archaeo</b>
+        to get a narrative account of how it got to where it is — decisions made,
+        things removed, problems solved.</p>
+        <p>Requires an Anthropic API key (configure in Settings → Tools → Code Archaeo).</p>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="Code Archaeo"
+                    anchor="right"
+                    secondary="false"
+                    icon="/icons/archaeo.svg"
+                    factoryClass="com.gnomecromancer.archaeo.ui.ArchaeoToolWindowFactory"/>
+
+        <applicationService
+                serviceImplementation="com.gnomecromancer.archaeo.services.ArchaeoSettings"/>
+
+        <applicationConfigurable
+                instance="com.gnomecromancer.archaeo.ui.ArchaeoSettingsConfigurable"
+                displayName="Code Archaeo"
+                parentId="tools"/>
+    </extensions>
+
+    <actions>
+        <group id="ArchaeoContextGroup" text="Code Archaeo" popup="true" icon="/icons/archaeo.svg">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+        </group>
+
+        <action id="Archaeo.FileHistory"
+                class="com.gnomecromancer.archaeo.actions.ArchaeoFileAction"
+                text="Dig File History"
+                description="Synthesize git history for this file">
+            <add-to-group group-id="ArchaeoContextGroup" anchor="first"/>
+        </action>
+
+        <action id="Archaeo.FunctionHistory"
+                class="com.gnomecromancer.archaeo.actions.ArchaeoFunctionAction"
+                text="Dig Function History"
+                description="Synthesize git history for the symbol under cursor">
+            <add-to-group group-id="ArchaeoContextGroup" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
