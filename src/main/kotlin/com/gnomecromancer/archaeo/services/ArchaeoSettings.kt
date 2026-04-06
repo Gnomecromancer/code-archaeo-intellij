@@ -12,7 +12,7 @@ import com.intellij.openapi.components.Storage
 class ArchaeoSettings : PersistentStateComponent<ArchaeoSettings.State> {
 
     data class State(
-        var apiKey: String = "",
+        var cliPath: String = "C:\\Users\\eliwo\\.local\\bin\\claude.exe",
         var maxCommits: Int = 50,
         var model: String = "claude-sonnet-4-6",
     )
@@ -25,9 +25,9 @@ class ArchaeoSettings : PersistentStateComponent<ArchaeoSettings.State> {
         this.state = state
     }
 
-    var apiKey: String
-        get() = state.apiKey
-        set(value) { state.apiKey = value }
+    var cliPath: String
+        get() = state.cliPath
+        set(value) { state.cliPath = value }
 
     var maxCommits: Int
         get() = state.maxCommits

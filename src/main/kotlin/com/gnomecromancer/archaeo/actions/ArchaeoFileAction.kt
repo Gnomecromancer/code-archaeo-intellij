@@ -27,8 +27,8 @@ class ArchaeoFileAction : AnAction() {
         val file = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: return
         val settings = ArchaeoSettings.instance
 
-        if (settings.apiKey.isBlank()) {
-            ArchaeoPanel.showError(project, "No API key configured. Go to Settings → Tools → Code Archaeo.")
+        if (settings.cliPath.isBlank()) {
+            ArchaeoPanel.showError(project, "Claude CLI path not set. Go to Settings → Tools → Code Archaeo.")
             return
         }
 
@@ -48,7 +48,7 @@ class ArchaeoFileAction : AnAction() {
 
                 indicator.text = "Synthesizing narrative (${commits.size} commits)…"
                 val history = git.formatForPrompt(commits, functionName = null)
-                val claude = ClaudeService(settings.apiKey, settings.model)
+                val claude = ClaudeService(settings.cliPath, settings.model)
 
                 val narrative = try {
                     claude.synthesize(history, filePath, functionName = null, commitCount = commits.size)
