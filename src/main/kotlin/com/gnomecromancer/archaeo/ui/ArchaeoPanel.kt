@@ -4,73 +4,60 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import java.awt.BorderLayout
-import java.awt.Font
+import javax.swing.JEditorPane
 import javax.swing.JPanel
 import javax.swing.JScrollPane
-import javax.swing.JTextPane
 import javax.swing.SwingUtilities
-import javax.swing.text.StyleConstants
-import javax.swing.text.StyleContext
+import javax.swing.text.html.HTMLEditorKit
+import javax.swing.text.html.StyleSheet
 
 class ArchaeoPanel : JPanel(BorderLayout()) {
 
-    private val textPane = JTextPane().apply {
+    private val editorPane = JEditorPane().apply {
         isEditable = false
-        contentType = "text/html"
-        putClientProperty(JTextPane.HONOR_DISPLAY_PROPERTIES, true)
-        font = Font("JetBrains Mono", Font.PLAIN, 13).let {
-            // fallback to monospaced if JetBrains Mono not available
-            if (it.family == "JetBrains Mono") it else Font(Font.MONOSPACED, Font.PLAIN, 13)
-        }
-        background = null
+        val kit = HTMLEditorKit()
+        // Base stylesheet for readable output
+        kit.styleSheet.addRule("body { font-family: sans-serif; font-size: 13pt; margin: 8px; }")
+        kit.styleSheet.addRule("h3 { margin-top: 4px; margin-bottom: 6px; }")
+        kit.styleSheet.addRule("p { margin-top: 0; margin-bottom: 8px; }")
+        kit.styleSheet.addRule("code { font-family: monospace; background: #f0f0f0; padding: 1px 3px; }")
+        editorKit = kit
+        document = kit.createDefaultDocument()
     }
 
     init {
-        add(JScrollPane(textPane), BorderLayout.CENTER)
+        add(JScrollPane(editorPane), BorderLayout.CENTER)
     }
 
     fun setContent(header: String, narrative: String) {
-        val html = buildHtml(header, narrative)
         SwingUtilities.invokeLater {
-            textPane.contentType = "text/html"
-            textPane.text = html
-            textPane.caretPosition = 0
-        }
-    }
-
-    fun setLoading(message: String) {
-        SwingUtilities.invokeLater {
-            textPane.contentType = "text/html"
-            textPane.text = buildHtml("", "<em>$message</em>")
+            editorPane.text = buildHtml(header, narrative)
+            editorPane.caretPosition = 0
         }
     }
 
     fun setError(message: String) {
         SwingUtilities.invokeLater {
-            textPane.contentType = "text/html"
-            textPane.text = buildHtml("Error", "<span style='color:#e06c75'>$message</span>")
+            editorPane.text = buildHtml("Error", "<span style='color:red'>$message</span>")
         }
     }
 
     private fun buildHtml(header: String, body: String): String {
-        val headerHtml = if (header.isNotBlank()) "<h3>${header.replace("`", "<code>").replace("</code>", "</code>")}</h3>" else ""
-        // Convert basic markdown to HTML
+        val headerHtml = if (header.isNotBlank()) "<h3>${header.escapeHtml()}</h3>" else ""
         val bodyHtml = body
-            .replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-            .replace("`([^`]+)`".toRegex(), "<code>$1</code>")
+            .escapeHtml()
+            .replace("`([^`\n]+)`".toRegex(), "<code>$1</code>")
             .replace("\n\n", "</p><p>")
-            .replace("\n", "<br>")
+            .replace("\n", "<br/>")
             .let { "<p>$it</p>" }
 
-        return """
-            <html><body style='font-family: sans-serif; padding: 8px; font-size: 13px;'>
-            $headerHtml
-            $bodyHtml
-            </body></html>
-        """.trimIndent()
+        return "<html><body>$headerHtml$bodyHtml</body></html>"
     }
+
+    private fun String.escapeHtml() = this
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
 
     companion object {
         fun showNarrative(project: Project, header: String, narrative: String) {

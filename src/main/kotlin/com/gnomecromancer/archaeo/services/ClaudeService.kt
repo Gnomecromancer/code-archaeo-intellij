@@ -25,33 +25,34 @@ $history
 Tell the story of how $target got to where it is today.
         """.trimIndent()
 
-        val cmd = buildList {
-            add(cliPath)
-            add("--print")
-            add("--model")
-            add(model)
-            add(prompt)
-        }
+        // Write to temp file to avoid Windows 32KB command line limit
+        val tempFile = File.createTempFile("archaeo_prompt_", ".txt")
+        try {
+            tempFile.writeText(prompt, Charsets.UTF_8)
 
-        val process = ProcessBuilder(cmd)
-            .redirectErrorStream(false)
-            .start()
+            val process = ProcessBuilder(listOf(cliPath, "--print", "--model", model))
+                .redirectErrorStream(false)
+                .redirectInput(tempFile)
+                .start()
 
-        val output = process.inputStream.bufferedReader().readText()
-        val errors = process.errorStream.bufferedReader().readText()
-        val finished = process.waitFor(120, TimeUnit.SECONDS)
+            val output = process.inputStream.bufferedReader().readText()
+            val errors = process.errorStream.bufferedReader().readText()
+            val finished = process.waitFor(120, TimeUnit.SECONDS)
 
-        if (!finished) {
-            process.destroyForcibly()
-            throw RuntimeException("Claude CLI timed out after 120 seconds")
-        }
-        if (process.exitValue() != 0) {
-            val detail = errors.take(200).ifBlank { output.take(200) }
-            throw RuntimeException("Claude CLI exited with ${process.exitValue()}: $detail")
-        }
+            if (!finished) {
+                process.destroyForcibly()
+                throw RuntimeException("Claude CLI timed out after 120 seconds")
+            }
+            if (process.exitValue() != 0) {
+                val detail = errors.take(300).ifBlank { output.take(300) }
+                throw RuntimeException("Claude CLI error (exit ${process.exitValue()}): $detail")
+            }
 
-        return output.trim().ifBlank {
-            throw RuntimeException("Claude CLI returned no output")
+            return output.trim().ifBlank {
+                throw RuntimeException("Claude CLI returned no output")
+            }
+        } finally {
+            tempFile.delete()
         }
     }
 }
